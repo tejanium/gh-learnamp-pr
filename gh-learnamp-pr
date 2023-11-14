@@ -1,35 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Hello gh-learnamp-pr!"
+JIRA_TICKET=$(git branch --show-current | cut -d '/' -f1)
+TITLE=$(git branch --show-current | cut -d '/' -f2 | sed -e 's/-/ /g')
 
-# Snippets to help get started:
+if [ -z "$JIRA_TICKET" ] || [ -z "$TITLE" ] || [ ! -f .github/PULL_REQUEST_TEMPLATE.md ]; then
+  echo "I don't think you are in a branch with a JIRA ticket name"
+  exit 1
+fi
 
-# Determine if an executable is in the PATH
-# if ! type -p ruby >/dev/null; then
-#   echo "Ruby not found on the system" >&2
-#   exit 1
-# fi
+TEMPLATE=$(cat .github/PULL_REQUEST_TEMPLATE.md | sed -e 's/ticketnumber/'$JIRA_TICKET'/g')
 
-# Pass arguments through to another command
-# gh issue list "$@" -R cli/cli
-
-# Using the gh api command to retrieve and format information
-# QUERY='
-#   query($endCursor: String) {
-#     viewer {
-#       repositories(first: 100, after: $endCursor) {
-#         nodes {
-#           nameWithOwner
-#           stargazerCount
-#         }
-#       }
-#     }
-#   }
-# '
-# TEMPLATE='
-#   {{- range $repo := .data.viewer.repositories.nodes -}}
-#     {{- printf "name: %s - stargazers: %v\n" $repo.nameWithOwner $repo.stargazerCount -}}
-#   {{- end -}}
-# '
-# exec gh api graphql -f query="${QUERY}" --paginate --template="${TEMPLATE}"
+gh pr create -d --title "[$JIRA_TICKET] $TITLE" --body "$TEMPLATE"
